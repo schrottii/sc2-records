@@ -56,7 +56,8 @@ function tableFromWiki(wikiTable, separator) {
 
         // lines / rows
         if (!line.includes("||") && line.includes("|")) {
-            output = output + "<td>" + line.substr(1) + "</td>";
+            if (line.includes("class=")) output = output + "<td class=" + line.split("class=")[1].split(" ")[0] + ">" + line.split("class=")[1].split(" ")[1] + "</td>";
+            else output = output + "<td>" + line.substr(1) + "</td>";
             continue;
         }
         if (line.includes("||")) {
@@ -67,7 +68,8 @@ function tableFromWiki(wikiTable, separator) {
                 if (row.includes("[http")) {
                     row = imageFromWiki(row);
                 }
-                output = output + "<td>" + row + "</td>";
+                if (line.includes("class=")) output = output + "<td class=" + line.split("class=")[1].split(" ")[0] + ">" + (row.includes("class=") ? row.split("class=")[1].split(" ")[1] : row) + "</td>";
+                else output = output + "<td>" + row + "</td>";
             }
             continue;
         }

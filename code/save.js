@@ -1,18 +1,16 @@
 // saving the record categories and the order of categories are separate, to allow for re-ordering
 var saveData;
 
-var localStorageKey = "RECMANG";
-
 function loadSaveData() {
-    if (localStorage.getItem(localStorageKey)) {
-        saveData = JSON.parse(localStorage.getItem(localStorageKey).substring(localStorageKey.length));
+    if (localStorage.getItem(config.localStorageKey)) {
+        saveData = JSON.parse(localStorage.getItem(config.localStorageKey).substring(config.localStorageKey.length));
         return true;
     }
     return false;
 }
 
 function saveSaveData() {
-    localStorage.setItem(localStorageKey, localStorageKey + JSON.stringify(saveData));
+    localStorage.setItem(config.localStorageKey, config.localStorageKey + JSON.stringify(saveData));
 }
 
 function newSaveData() {
@@ -29,13 +27,13 @@ function newSaveData() {
 }
 
 function exportSaveData() {
-    navigator.clipboard.writeText(localStorageKey + JSON.stringify(saveData));
+    navigator.clipboard.writeText(config.localStorageKey + JSON.stringify(saveData));
 }
 
 function importSaveData() {
     let save = prompt("Insert the code here...");
     try {
-        save = save.substring(localStorageKey.length);
+        save = save.substring(config.localStorageKey.length);
         save = JSON.parse(save);
 
         saveData = save;

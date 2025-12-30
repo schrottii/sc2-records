@@ -42,3 +42,7 @@ body {
     background-color: white;
     filter: brightness(120%);
 }
+
+.golden {
+    background-color: gold;
+}
