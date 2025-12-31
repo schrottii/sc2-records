@@ -2,11 +2,13 @@ var ui = {
     sectionTitle: document.getElementById("sectionTitle"),
     leftSide: document.getElementById("leftSide"),
     rightSide: document.getElementById("rightSide"),
+    editorAreaRow: document.getElementById("editorAreaRow"),
     tabTitle: document.getElementById("tabTitle"),
     tabTitle2: document.getElementById("tabTitle2"),
 
     tableSearch: document.getElementById("tableSearch"),
     categoriesSearch: document.getElementById("categoriesSearch"),
+    top10: document.getElementById("top10"),
 };
 
 function imageFromWiki(wikiImage) {
@@ -103,20 +105,92 @@ function createTable(name, content) {
     let counter = 1;
     let table = "{|\n" + saveData.catConfig[name].header;
 
-    let cclass;
+    let cclass = "";
+    let cclick = "";
 
     for (let c of content){
-        if (ui.tableSearch.value != "" && c.toString().toLowerCase().includes(ui.tableSearch.value.toLowerCase())) cclass = "class='golden' ";
+        // filter/highlight color (class) change
+        if (config.editorMode && editor.row == counter) cclass = "class='editing' ";
+        else if (ui.tableSearch.value != "" && c.toString().toLowerCase().includes(ui.tableSearch.value.toLowerCase())) cclass = "class='golden' ";
+        else if (ui.categoriesSearch.value != "" && c.toString().toLowerCase().includes(ui.categoriesSearch.value.toLowerCase().trim())) cclass ="class='highlighted' ";
         else cclass = "";
 
-        table = table + "\n|-\n| " + cclass + counter + ".";
+        // clickable in editor mode
+        if (config.editorMode) cclick = "onclick='clickRow(" + counter + ")' ";
+
+        // add content
+        table = table + "\n|-\n| " + cclass + cclick + counter + ".";
         for (let cc of c) {
             table = table + "||" + cc;
         }
+
+        // used for 1./2./3. and top 10 limiter
         counter++;
+        if (ui.top10.checked == true && counter > 10) break;
     }
     return formatTableFromHTML(tableFromWiki(table),
     { tableClass: "tableClass", headerClass: "headerClass", rowClass: "rowClass" });
+}
+
+var editor = {
+    row: -1
+}
+
+function clickRow(row) {
+    // select this one
+    console.log(row);
+    editor.row = row;
+
+    // render cells for editing
+    let render = "<h4>Edit row/submission:</h4>";
+
+    for (let c in saveData.records[saveData.selected][row - 1]) {
+        render = render + saveData.catConfig[saveData.selected].header.split("!!")[c]
+        + "<input id='cell-" + c + "' onblur='editCell(" + c + ")' type='text' style='width: 75%; text-align: left;' value='"
+        + saveData.records[saveData.selected][row - 1][c] + "'></input><br />";
+    }
+
+    render = render + "<button onclick='deleteRow()'>Delete row</button>";
+    render = render + "<button onclick='deletePlayer(`" + saveData.records[saveData.selected][row - 1][saveData.catConfig[saveData.selected].header.split("!!").indexOf(" Player ") - 1] + "`)'>Delete all instances of player</button>";
+
+    ui.editorAreaRow.innerHTML = render;
+
+    // update relevant UI
+    renderRightSide();
+}
+
+function deleteRow(selTable = saveData.selected, selRow = editor.row) {
+    // deletes selected row
+    let newTable = [];
+    for (let t in saveData.records[selTable]) {
+        if (t != selRow - 1) {
+            newTable.push(saveData.records[selTable][t]);
+        }
+    }
+
+    saveData.records[selTable] = newTable;
+    editor.row = -1;
+    renderRightSide();
+}
+
+function editCell(nr) {
+    console.log(nr);
+    saveData.records[saveData.selected][editor.row - 1][nr] = document.getElementById("cell-" + nr).value;
+    renderRightSide();
+}
+
+function deletePlayer(player) {
+    console.log(player);
+    let table;
+    for (let t in saveData.records) {
+        table = saveData.records[t];
+        for (let row in table) {
+            if (table[row].includes(player)) deleteRow(t, parseInt(row) + 1);
+        }
+    }
+
+    // render list, right side is done by deleteRow
+    renderCategoriesList();
 }
 
 function showCategory(name) {

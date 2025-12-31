@@ -16,7 +16,7 @@ function tableFromWiki(wikiTable, separator) {
     let output = "";
     let trActive = false;
     wikiTable = wikiTable.match(/[^\r\n]+/g);
-    console.log(wikiTable);
+    //console.log(wikiTable);
 
     for (let line of wikiTable) {
         // beginning of table
@@ -68,7 +68,11 @@ function tableFromWiki(wikiTable, separator) {
                 if (row.includes("[http")) {
                     row = imageFromWiki(row);
                 }
-                if (line.includes("class=")) output = output + "<td class=" + line.split("class=")[1].split(" ")[0] + ">" + (row.includes("class=") ? row.split("class=")[1].split(" ")[1] : row) + "</td>";
+                if (line.includes("onclick=") && line.includes("class=")) {
+                    output = output + "<td onclick=" + line.split("onclick=")[1].split(" ")[0] + " class=" + line.split("class=")[1].split(" ")[0] + ">" + (row.includes("onclick=") ? row.split("onclick=")[1].split(" ")[1] : row) + "</td>";
+                }
+                else if (line.includes("onclick=")) output = output + "<td onclick=" + line.split("onclick=")[1].split(" ")[0] + ">" + (row.includes("onclick=") ? row.split("onclick=")[1].split(" ")[1] : row) + "</td>";
+                else if (line.includes("class=")) output = output + "<td class=" + line.split("class=")[1].split(" ")[0] + ">" + (row.includes("class=") ? row.split("class=")[1].split(" ")[1] : row) + "</td>";
                 else output = output + "<td>" + row + "</td>";
             }
             continue;
@@ -88,8 +92,7 @@ function tablesFromWiki(wikiContent, separator = "\n") {
     let outputs = "";
     let tableComplete = false;
     let wikiLines = wikiContent.match(/[^\r\n]+/g);
-    console.log(wikiContent)
-    console.log(wikiLines)
+
     for (let wikiLine of wikiLines) {
         if (tableComplete) {
             if (wikiLine.includes("|}")) tableComplete = false;
@@ -108,7 +111,6 @@ function tablesFromWiki(wikiContent, separator = "\n") {
 function tableFromHTML(htmlTable, separator = "\n") {
     let output = "";
     htmlTable = htmlTable.match(/[^\r<]+/g);
-    console.log(htmlTable);
 
     let inRows = false;
     for (let line of htmlTable) {

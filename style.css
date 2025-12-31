@@ -6,6 +6,19 @@ body {
     font-size: 24px;
 }
 
+h1, h2, h3, h4, h5, h6 {
+    margin-bottom: 2px;
+    margin-top: 6px;
+}
+
+button {
+    border-style: ridge;
+    background-color: antiquewhite;
+    color: black;
+    border-width: 4px;
+    min-height: 40px;
+}
+
 .listButton {
     width: 100%;
     border: 4px solid black;
@@ -18,6 +31,7 @@ body {
     filter: brightness(50%);
 }
 
+/* general table css */
 .tableClass {
     background-color: black;
     color: rgb(7, 7, 7);
@@ -26,7 +40,7 @@ body {
 }
 
 .headerClass {
-    background-color: darkslategray;
+    background-color: rgb(67, 109, 109);
     color: white;
 }
 
@@ -35,7 +49,7 @@ body {
 }
 
 .rowClass {
-    background-color: lightgray;
+    background-color: rgb(227, 222, 222);
 }
 
 .rowClass:hover {
@@ -43,6 +57,15 @@ body {
     filter: brightness(120%);
 }
 
+/* highlighters for table rows */
 .golden {
     background-color: gold;
+}
+
+.highlighted {
+    background-color: white;
+}
+
+.editing {
+    background-color: orange;
 }
