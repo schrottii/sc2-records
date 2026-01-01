@@ -1,7 +1,12 @@
+////////////////////////////////////////////////
+// variables
+////////////////////////////////////////////////
+
 var ui = {
     sectionTitle: document.getElementById("sectionTitle"),
     leftSide: document.getElementById("leftSide"),
     rightSide: document.getElementById("rightSide"),
+    editorAreaCategory: document.getElementById("editorAreaCategory"),
     editorAreaRow: document.getElementById("editorAreaRow"),
     tabTitle: document.getElementById("tabTitle"),
     tabTitle2: document.getElementById("tabTitle2"),
@@ -10,6 +15,15 @@ var ui = {
     categoriesSearch: document.getElementById("categoriesSearch"),
     top10: document.getElementById("top10"),
 };
+
+var editor = {
+    row: -1,
+    category: ""
+}
+
+////////////////////////////////////////////////
+// core functions
+////////////////////////////////////////////////
 
 function imageFromWiki(wikiImage) {
     // own function for loading images, which creates links instead of
@@ -22,6 +36,10 @@ function imageFromWiki(wikiImage) {
 function generateID() {
     return "" + Math.random().toString(16).slice(2);
 }
+
+////////////////////////////////////////////////
+// loading and converting
+////////////////////////////////////////////////
 
 function loadCategoryFromWiki(wikiContent) {
     // sub function for loadCategoriesFromWiki
@@ -132,20 +150,31 @@ function createTable(name, content) {
     { tableClass: "tableClass", headerClass: "headerClass", rowClass: "rowClass" });
 }
 
-var editor = {
-    row: -1
+function showCategory(name) {
+    // triggered when left side button clicked
+    // changes right side to selected record category
+    saveData.selected = name;
+
+    editCategory();
+    renderRightSide();
+    renderCategoriesList();
+    saveSaveData();
 }
+
+////////////////////////////////////////////////
+// edit row functions
+////////////////////////////////////////////////
 
 function clickRow(row) {
     // select this one
-    console.log(row);
+    if (!config.editorMode) return false;
     editor.row = row;
 
     // render cells for editing
     let render = "<h4>Edit row/submission:</h4>";
 
     for (let c in saveData.records[saveData.selected][row - 1]) {
-        render = render + saveData.catConfig[saveData.selected].header.split("!!")[c]
+        render = render + saveData.catConfig[saveData.selected].header.split("!!")[parseInt(c) + 1] // +1 to ignore place
         + "<input id='cell-" + c + "' onblur='editCell(" + c + ")' type='text' style='width: 75%; text-align: left;' value='"
         + saveData.records[saveData.selected][row - 1][c] + "'></input><br />";
     }
@@ -161,6 +190,8 @@ function clickRow(row) {
 
 function deleteRow(selTable = saveData.selected, selRow = editor.row) {
     // deletes selected row
+    if (!config.editorMode) return false;
+
     let newTable = [];
     for (let t in saveData.records[selTable]) {
         if (t != selRow - 1) {
@@ -170,17 +201,23 @@ function deleteRow(selTable = saveData.selected, selRow = editor.row) {
 
     saveData.records[selTable] = newTable;
     editor.row = -1;
+
+    renderCategoriesList();
     renderRightSide();
 }
 
 function editCell(nr) {
-    console.log(nr);
+    if (!config.editorMode) return false;
+
     saveData.records[saveData.selected][editor.row - 1][nr] = document.getElementById("cell-" + nr).value;
+    
+    sortTable();
     renderRightSide();
 }
 
 function deletePlayer(player) {
-    console.log(player);
+    if (!config.editorMode) return false;
+    
     let table;
     for (let t in saveData.records) {
         table = saveData.records[t];
@@ -193,15 +230,152 @@ function deletePlayer(player) {
     renderCategoriesList();
 }
 
-function showCategory(name) {
-    // triggered when left side button clicked
-    // changes right side to selected record category
-    saveData.selected = name;
+////////////////////////////////////////////////
+// category editing functions
+////////////////////////////////////////////////
 
-    renderRightSide();
-    renderCategoriesList();
-    saveSaveData();
+function editCategory(category = saveData.selected) {
+    if (!config.editorMode) return false;
+    editor.category = category;
+
+    let render = "<h4>Edit category:</h4>";
+
+    // render editable config for the category
+    let catConfigs = [
+        "name", "header", "sorter", "ascending"
+    ];
+
+    for (let cfg of catConfigs) {
+        render = render + cfg + ": "
+        + "<input id='cfg-" + cfg
+        + "' style='width: 75%; text-align: left;'"
+        + "value='" + saveData.catConfig[category][cfg]
+        + "' onblur='editCategoryConfig(`" + cfg + "`)'></input><br />";
+    }
+
+    // buttons
+    render = render + "<button onclick='sortTable();'>Sort table</button>";
+
+    ui.editorAreaCategory.innerHTML = render;
 }
+
+function editCategoryConfig(cfg) {
+    let newValue = document.getElementById("cfg-" + cfg).value;
+    if (newValue == "") return false;
+
+    saveData.catConfig[editor.category][cfg] = newValue;
+
+    if (cfg == "sorter") sortTable();
+    renderRightSide();
+}
+
+function sortTable(tableID = saveData.selected, sortByID = "auto") {
+    let oldTable = saveData.records[tableID];
+    let newTable = [];
+    let pairs = []; // each pair is: [ID, value]
+    // it sorts by value, and uses the ID to place them around
+
+    if (sortByID == "auto" && saveData.catConfig[saveData.selected].sorter != undefined) {
+        let headers = saveData.catConfig[saveData.selected].header.split("!!");
+        for (head in headers) {
+            headers[head] = headers[head].trim().toLowerCase();
+        }
+        sortByID = headers.indexOf(saveData.catConfig[saveData.selected].sorter.trim().toLowerCase()) - 1;
+    }
+    if (sortByID == undefined) {
+        // usually the right one (0 = player, 1 = value)
+        sortByID = 1; 
+        saveData.catConfig[saveData.selected].sorter = 1;
+    }
+
+    // create pairs [ID, value]
+    for (let p in oldTable) {
+        pairs.push([p, sortableValue(oldTable[p][sortByID])]);
+    }
+
+    // sort
+    let ascending = saveData.catConfig[saveData.selected].ascending;
+    if (ascending == undefined) ascending = false;
+    if (ascending == "true") ascending = true;
+
+    for (let j = 0; j < pairs.length; j++) {
+        for (let i = 0; i < pairs.length -1; i++) {
+            if (ascending == true ? pairs[j][1] < pairs[i][1] : pairs[j][1] > pairs[i][1]) {
+                // swap
+                if (ascending == true) {
+                    let temp = [pairs[i][0], pairs[i][1]];
+                    pairs[i] = [pairs[j][0], pairs[j][1]];
+                    pairs[j] = temp;
+                }
+                else {
+                    let temp = [pairs[j][0], pairs[j][1]];
+                    pairs[j] = [pairs[i][0], pairs[i][1]];
+                    pairs[i] = temp;
+                }
+            }
+        }
+    }
+
+    // gen new Table
+    // descending, high to low
+    for (let n in oldTable) {
+        newTable.push(oldTable[pairs[n][0]]);
+    }
+
+    saveData.records[tableID] = newTable;
+    renderRightSide();
+}
+
+function sortableValue(v) {
+    // takes care of various values to sort by, ie time, high numbers
+    // this is purely internal and should not be returned to render
+    if (v == undefined) return v;
+    v = v.replaceAll(",", "");
+    //v = v.replaceAll(".", "");
+
+    // has link
+    if (v.includes("http")) {
+        v = v.trim();
+        v = v.substr(v.indexOf(" ")).trim();
+        if (v.substr(-1) == "]") v = v.substr(0, v.length - 1);
+    }
+
+    // time
+    if (v.includes("min") || v.includes("hour")) {
+        if (v.split(" ").length > 3) {
+            v = v.split(" "); // 69 hours 30 mins -> 60,hours,30,mins
+            let h = v[0] * 60;
+            v = h + v[2];
+        }
+        else {
+            v = v.split("h"); // still catches the hour
+            let h = parseInt(v[0]) * 60;
+            v = h + v[1];
+        }
+
+        return parseInt(v);
+    }
+
+    // normal notation numbers
+    let normalNotation = "kMBTQqSsOND".split("");
+    if (normalNotation.includes(v.trim().substr(-1))) {
+        let index = normalNotation.indexOf(v.trim().substr(-1));
+        let e = Math.pow(1000, index + 1); // +1 cuz index starts at 0 (K = 0)
+
+        if (v.includes(".")) v = parseFloat(v);
+        else v = parseInt(v);
+
+        v = v * e;
+        return v;
+    }
+
+    // return other
+    return parseInt(v);
+}
+
+////////////////////////////////////////////////
+// render functions
+////////////////////////////////////////////////
 
 function renderCategoriesList() {
     // renders the left side
