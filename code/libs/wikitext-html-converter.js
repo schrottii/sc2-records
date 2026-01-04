@@ -8,8 +8,14 @@ tableFromWiki
 tablesFromWiki
 tableFromHTML
 tablesFromHTML
+
+formatTableFromWiki
+formatTableFromHTML
+
 imageFromWiki
+imagesFromWiki
 imageFromHTML
+imagesFromHTML
 */
 
 function tableFromWiki(wikiTable, separator) {
@@ -62,11 +68,10 @@ function tableFromWiki(wikiTable, separator) {
         }
         if (line.includes("||")) {
             let rows = line.substr(1).split("||");
-            //console.log(rows)
 
             for (let row of rows) {
                 if (row.includes("[http")) {
-                    row = imageFromWiki(row);
+                    row = imagesFromWiki(row, "a"); // edited
                 }
                 if (line.includes("onclick=") && line.includes("class=")) {
                     output = output + "<td onclick=" + line.split("onclick=")[1].split(" ")[0] + " class=" + line.split("class=")[1].split(" ")[0] + ">" + (row.includes("onclick=") ? row.split("onclick=")[1].split(" ")[1] : row) + "</td>";
@@ -80,7 +85,7 @@ function tableFromWiki(wikiTable, separator) {
 
         // images
         if (line.includes("[http")) {
-            output = output + imageFromWiki(line);
+            output = output + imagesFromWiki(line, "a"); // edited
             continue;
         }
     }
@@ -154,7 +159,7 @@ function tableFromHTML(htmlTable, separator = "\n") {
 
         // image
         if (line.substr(0, 3) == "img") {
-            output = output + imageFromHTML(line);
+            output = output + imagesFromHTML(line);
         }
     }
 
@@ -210,9 +215,46 @@ function formatTableFromHTML(htmlTable, formatting) {
     return htmlTable;
 }
 
+function imageFromWiki(wikiImage, resultType = "img") {
+    if (resultType == "img" || resultType == "image") {
+        return '<img src="'
+            + wikiImage.split("[")[1].split(" ")[0]
+            + '" alt="' + wikiImage.split("[")[1]?.split(" ")[1]?.split("]")[0]
+            + '" />';
+    }
+
+    if (resultType == "a" || resultType == "link") {
+        return '<a target="_blank" href="'
+            + wikiImage.split("[")[1].split(" ")[0]
+            + '">' + wikiImage.split("[")[1]?.substr(wikiImage.split("[")[1].indexOf(" ") + 1)?.split("]")[0] + '</a>';
+    }
+}
+
+function imagesFromWiki(wikiImages, resultType = "img") {
+    if (wikiImages.split("[").length == 1) return imageFromWiki(wikiImages, resultType);
+
+    let imgs = "";
+    for (let wikiImage of wikiImages.split("[")) {
+        if (!wikiImage.includes("]")) continue;
+        imgs = imgs + imageFromWiki("[" + wikiImage, resultType) + "<br />"; // edited
+    }
+    return imgs;
+}
+
 function imageFromHTML(htmlImage) {
     return "["
     + htmlImage.split('src="')[1].split('"')[0]
     + " " + htmlImage.split('alt="')[1].split('"')[0]
     + "]";
+}
+
+function imagesFromHTML(htmlImages) {
+    if (htmlImages.split("<img").length == 1) return imageFromHTML(htmlImages);
+
+    let imgs = "";
+    for (let htmlImage of htmlImages.split("<img")) {
+        if (!htmlImage.includes(">")) continue;
+        imgs = imgs + imageFromHTML("<img" + htmlImage);
+    }
+    return imgs;
 }

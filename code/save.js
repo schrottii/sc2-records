@@ -28,6 +28,7 @@ function newSaveData() {
 
 function exportSaveData() {
     navigator.clipboard.writeText(config.localStorageKey + JSON.stringify(saveData));
+    alert("copied to clipboard");
 }
 
 function importSaveData() {

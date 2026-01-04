@@ -14,6 +14,7 @@ var ui = {
     tableSearch: document.getElementById("tableSearch"),
     categoriesSearch: document.getElementById("categoriesSearch"),
     top10: document.getElementById("top10"),
+    editorOnlySettings: document.getElementById("editorOnlySettings"),
 };
 
 var editor = {
@@ -25,16 +26,96 @@ var editor = {
 // core functions
 ////////////////////////////////////////////////
 
-function imageFromWiki(wikiImage) {
-    // own function for loading images, which creates links instead of
-    // trying to show images that discord doesnt allow anymore
-    return '<a target="_blank" href="'
-    + wikiImage.split("[")[1].split(" ")[0]
-    + '">' + wikiImage.split("[")[1]?.split(" ")[1]?.split("]")[0] + '</a>';
-}
-
 function generateID() {
     return "" + Math.random().toString(16).slice(2);
+}
+
+function convertToWikitext() {
+    let WIKI = ``;
+    let table;
+    let tconfig;
+    let rowCounter;
+
+    for (let tID of Object.keys(saveData.records)) {
+        table = saveData.records[tID];
+        tconfig = saveData.catConfig[tID];
+
+        //console.log(table);
+        //console.log(tconfig);
+
+        // header and pretext
+        WIKI = WIKI + `==== ${tconfig.name} ====\n`;
+        if (tconfig.preText) WIKI = WIKI + tconfig.preText + `\n`;
+        WIKI = WIKI + `{| class='article-table'\n`;
+
+        // table content 
+        if (tconfig.header.substr(0, 2) == "! ") WIKI = WIKI + `${tconfig.header}\n|-\n`;
+        else WIKI = WIKI + `! ${tconfig.header}\n`;
+
+        rowCounter = 1;
+        for (let row of table) {
+            WIKI = WIKI + `|-\n`;
+            for (let e in row) {
+                if (e == 0) WIKI = WIKI + `| ${rowCounter}. || ${row[e]} `;
+                else WIKI = WIKI + `|| ${row[e]} `;
+            }
+            
+            WIKI = WIKI + `\n`;
+            rowCounter++;
+        }
+
+        // end
+        WIKI = WIKI + `|}\n\n`;
+    }
+
+    console.log(WIKI);
+}
+
+function sortableValue(v) {
+    // takes care of various values to sort by, ie time, high numbers
+    // this is purely internal and should not be returned to render
+    if (v == undefined) return v;
+    v = v.replaceAll(",", "");
+    //v = v.replaceAll(".", "");
+
+    // has link
+    if (v.includes("http")) {
+        v = v.trim();
+        v = v.substr(v.indexOf(" ")).trim();
+        if (v.substr(-1) == "]") v = v.substr(0, v.length - 1);
+    }
+
+    // time
+    if (v.includes("min") || v.includes("hour")) {
+        if (v.split(" ").length > 3) {
+            v = v.split(" "); // 69 hours 30 mins -> 60,hours,30,mins
+            let h = v[0] * 60;
+            v = h + v[2];
+        }
+        else {
+            v = v.split("h"); // still catches the hour
+            let h = parseInt(v[0]) * 60;
+            v = h + v[1];
+        }
+
+        return parseInt(v);
+    }
+
+    // normal notation numbers
+    let normalNotation = "kMBTQqSsOND".split("");
+    if (normalNotation.includes(v.trim().substr(-1))) {
+        let index = normalNotation.indexOf(v.trim().substr(-1));
+        let e = Math.pow(1000, index + 1); // +1 cuz index starts at 0 (K = 0)
+
+        if (v.includes(".")) v = parseFloat(v);
+        else v = parseInt(v);
+
+        v = v * e;
+        return v;
+    }
+
+    // return other
+    return parseInt(v);
 }
 
 ////////////////////////////////////////////////
@@ -48,15 +129,18 @@ function loadCategoryFromWiki(wikiContent) {
     let content = [];
     let contentPush = [];
     let multiLiner = false;
+    let lineSplit;
+    let last;
 
+    // go through the lines of a table (|, ||)
     for (let line of wikiLines) {
         if ((line.includes("||") || line.substr(0, 2) == "| ") && !line.includes("|-")) {
             // separates the values
-            let lineSplit = line.split("||");
+            lineSplit = line.split("||");
 
             // removes first if it's 1., 2., 3. etc.
             if (lineSplit[0].trim().substr(-1) == "."
-                && !lineSplit[0].includes("http")) lineSplit.shift(); // remove 1.
+                && !lineSplit[0].includes("http")) lineSplit.shift(); // remove 1., 2., 3. (place)
 
 
             for (let e in lineSplit) {
@@ -65,16 +149,43 @@ function loadCategoryFromWiki(wikiContent) {
                 if (lineSplit[e].includes("{{Exp")) lineSplit[e] = lineSplit[e].split("{{Exp|")[1].split("|")[0];
             }
 
+            // multiple elements in one line?
             if (lineSplit.length <= 2
                 && (lineSplit[0].trim() == "" || lineSplit[0].substr(0, 2) == "| ")) multiLiner = true;
             if (lineSplit[0].substr(0, 2) == "| ") lineSplit[0] = lineSplit[0].substr(2);
+            if (lineSplit[lineSplit.length - 1].trim() == "") {
+                contentPush.push(...lineSplit);
+                lineSplit = undefined;
+                multiLiner = true;
+            }
+        }
+        if (line.includes("http")) { // link
+            if (lineSplit != undefined) {
+                // add non-link content
+                if (contentPush.length == 0) contentPush.push(...lineSplit);
+            }
 
+            // combine existing links and latest link
+            if (contentPush.length == 0) last = 0;
+            else last = 1;
+
+            if (!line.includes("||") || line.split("[http").length > 2) contentPush[contentPush.length - last] = contentPush[contentPush.length - last] + line.substr(line.indexOf("[http"));
+
+            multiLiner = true;
+            lineSplit = undefined;
+        }
+        
+        if (lineSplit != undefined) {
             if (!multiLiner) content.push(lineSplit);
             else if (lineSplit.length == 1) contentPush.push(lineSplit[0]);
             else contentPush.push(lineSplit[1]);
+
+            lineSplit = undefined;
         }
+        
         if (line.includes("|-")) {
             if (multiLiner) {
+                // pushes multi line content when next line begins for sure
                 content.push(contentPush);
                 contentPush = [];
                 multiLiner = false;
@@ -101,6 +212,7 @@ function loadCategoriesFromWiki(categoriesContent) {
             categoryName = cat.split("\n")[0].replaceAll("=", "").replaceAll("[", "").replaceAll("]", "");
             categoryName = categoryName.trim();
 
+            // generate ID (used for saving) and load the contents (rows)
             ID = generateID();
             categoryContent = loadCategoryFromWiki(cat);
 
@@ -242,7 +354,7 @@ function editCategory(category = saveData.selected) {
 
     // render editable config for the category
     let catConfigs = [
-        "name", "header", "sorter", "ascending"
+        "name", "header", "sorter", "ascending", "preText"
     ];
 
     for (let cfg of catConfigs) {
@@ -255,6 +367,8 @@ function editCategory(category = saveData.selected) {
 
     // buttons
     render = render + "<button onclick='sortTable();'>Sort table</button>";
+    render = render + "<button onclick='addTableRow();'>Add row</button>";
+    render = render + "<button onclick='addTableRowEmpty();'>Add empty row</button>";
 
     ui.editorAreaCategory.innerHTML = render;
 }
@@ -267,6 +381,38 @@ function editCategoryConfig(cfg) {
 
     if (cfg == "sorter") sortTable();
     renderRightSide();
+}
+
+function addTableRow() {
+    let headers = saveData.catConfig[saveData.selected].header;
+    let example = saveData.records[saveData.selected][0];
+    if (example[example.length - 1].includes("[http")) {
+        example[example.length - 1] = "images";
+    }
+    if (headers.includes("lace")) {
+        headers = headers.split("lace")[1];
+    }
+
+    let input = prompt("separated by ,\n" + headers + "\n" + example);
+    if (input == false || input == "" || input == undefined || !input.includes(",")) return false;
+    input = input.split(",");
+    if (input.length + 1 != saveData.catConfig[saveData.selected].header.split("!!").length) return false;
+
+    console.log(input)
+    saveData.records[saveData.selected].push(input);
+    sortTable();
+    renderEverything();
+}
+
+function addTableRowEmpty() {
+    let emptyRow = [];
+    for (let c = 0; c < saveData.catConfig[saveData.selected].header.split("!!").length - 1; c++) {
+        emptyRow.push("");
+    }
+
+    saveData.records[saveData.selected].push(emptyRow);
+    sortTable();
+    renderEverything();
 }
 
 function sortTable(tableID = saveData.selected, sortByID = "auto") {
@@ -326,53 +472,6 @@ function sortTable(tableID = saveData.selected, sortByID = "auto") {
     renderRightSide();
 }
 
-function sortableValue(v) {
-    // takes care of various values to sort by, ie time, high numbers
-    // this is purely internal and should not be returned to render
-    if (v == undefined) return v;
-    v = v.replaceAll(",", "");
-    //v = v.replaceAll(".", "");
-
-    // has link
-    if (v.includes("http")) {
-        v = v.trim();
-        v = v.substr(v.indexOf(" ")).trim();
-        if (v.substr(-1) == "]") v = v.substr(0, v.length - 1);
-    }
-
-    // time
-    if (v.includes("min") || v.includes("hour")) {
-        if (v.split(" ").length > 3) {
-            v = v.split(" "); // 69 hours 30 mins -> 60,hours,30,mins
-            let h = v[0] * 60;
-            v = h + v[2];
-        }
-        else {
-            v = v.split("h"); // still catches the hour
-            let h = parseInt(v[0]) * 60;
-            v = h + v[1];
-        }
-
-        return parseInt(v);
-    }
-
-    // normal notation numbers
-    let normalNotation = "kMBTQqSsOND".split("");
-    if (normalNotation.includes(v.trim().substr(-1))) {
-        let index = normalNotation.indexOf(v.trim().substr(-1));
-        let e = Math.pow(1000, index + 1); // +1 cuz index starts at 0 (K = 0)
-
-        if (v.includes(".")) v = parseFloat(v);
-        else v = parseInt(v);
-
-        v = v * e;
-        return v;
-    }
-
-    // return other
-    return parseInt(v);
-}
-
 ////////////////////////////////////////////////
 // render functions
 ////////////////////////////////////////////////
@@ -411,7 +510,8 @@ function renderRightSide() {
     if (cat == undefined) return false;
 
     ui.sectionTitle.innerHTML = saveData.catConfig[saveData.selected].name;
-    ui.rightSide.innerHTML = createTable(saveData.selected, cat);// + "<hr style='clear: both;' /><br />" + saveData.selected;
+    ui.rightSide.innerHTML = (saveData.catConfig[saveData.selected].preText ? saveData.catConfig[saveData.selected].preText : "")
+    + createTable(saveData.selected, cat);
 }
 
 function renderEverything() {
@@ -425,6 +525,7 @@ function renderEverything() {
 function initializeManager() {
     // boots up the program
     ui.sectionTitle.innerHTML = "Select a category...";
+    ui.editorOnlySettings.style.display = config.editorMode ? "" : "none";
 
     // load save, or create new
     if (!config.forceDataReset && loadSaveData()) {
