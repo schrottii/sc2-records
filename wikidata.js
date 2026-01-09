@@ -1,3 +1,3 @@
-var exampleData = `
+﻿var exampleData = `
 
 `;

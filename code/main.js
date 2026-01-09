@@ -182,8 +182,8 @@ function loadCategoryFromWiki(wikiContent) {
                 multiLiner = true;
             }
         }
-        /*
-        if (line.includes("http")) { // link
+        
+        if (line.includes("http") && line.substr(0, 1) == "[") { // link
             if (lineSplit != undefined) {
                 // add non-link content
                 if (contentPush.length == 0) contentPush.push(...lineSplit);
@@ -199,7 +199,6 @@ function loadCategoryFromWiki(wikiContent) {
             multiLiner = true;
             lineSplit = undefined;
         }
-        */
         
         if (lineSplit != undefined) {
             if (!multiLiner) content.push(lineSplit);
