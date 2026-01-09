@@ -173,23 +173,21 @@ function loadCategoryFromWiki(wikiContent) {
             }
 
             // multiple elements in one line?
-            if (lineSplit.length <= 2
-                && (lineSplit[0].trim() == "" || lineSplit[0].substr(0, 2) == "| ")) multiLiner = true;
             if (lineSplit[0].substr(0, 2) == "| ") lineSplit[0] = lineSplit[0].substr(2);
-            if (lineSplit[lineSplit.length - 1].trim() == "") {
+
+            //if (lineSplit.length > 0 && lineSplit[lineSplit.length - 1].trim() == "") lineSplit.pop();
+            if (line.substr(0, 2) == "||" && lineSplit[0].trim() == "") lineSplit.shift();
+
+            if (wikiLines[0].includes("Positi")) console.log(lineSplit)
+            if (lineSplit[0].trim() != "") {
                 contentPush.push(...lineSplit);
                 lineSplit = undefined;
                 multiLiner = true;
             }
+            else content.push(lineSplit);
         }
-        
-        if (line.includes("http") && line.substr(0, 1) == "[") { // link
-            if (lineSplit != undefined) {
-                // add non-link content
-                if (contentPush.length == 0) contentPush.push(...lineSplit);
-                lineSplit = undefined;
-            }
 
+        if (line.includes("http") && line.substr(0, 1) == "[") { // link
             // combine existing links and latest link
             if (contentPush.length == 0) last = 0;
             else last = 1;
@@ -197,14 +195,6 @@ function loadCategoryFromWiki(wikiContent) {
             if (!line.includes("||") || line.split("[http").length > 2) contentPush[contentPush.length - last] = contentPush[contentPush.length - last] + line.substr(line.indexOf("[http"));
 
             multiLiner = true;
-            lineSplit = undefined;
-        }
-        
-        if (lineSplit != undefined) {
-            if (!multiLiner) content.push(lineSplit);
-            else if (lineSplit.length == 1) contentPush.push(lineSplit[0]);
-            else contentPush.push(lineSplit[1]);
-
             lineSplit = undefined;
         }
         
