@@ -1,8 +1,19 @@
 ## What is Records Manager?
-Application to manage game records that are written via Wikitext (wiki) tables, with tools to edit or update them faster and easier, and other neat things. 
+Tool to manage game records that are written via Wikitext (wiki) tables, with tools to edit or update them faster and easier, and other neat things. 
+It is still a work-in-progress, with new content and better explanations coming.
 
 ## How to use
-It can be used locally, with a dataset that is saved locally. Using it publicly for a game can be done by creating a fork, adjusting the config.js, keeping the updated data in wikidata.js and publishing it via GitHub pages or similar. 
+It can be used locally, with savedata that is saved locally. Using it publicly for a game can be done by creating a fork, adjusting the config.js, keeping the updated data in wikidata.js and publishing it via GitHub pages or similar. 
+
+## License
+If you want to organize records for a game (or something else) yourself, you can copy/fork it and work with your wiki data. Feel free to edit the config.js and style.css. 
+Be aware with other things, they could mess with later pulls. 
+You may not make money with it (besides donations), remove the credits/donation button to me, or pretend that the record management system is yours. 
+
+## Contact
+- Discord: schrottii
+- Discord Server: https://discord.gg/CbBeJXKUrk
+- GitHub
 
 ## Contents 
 Accessible for users:

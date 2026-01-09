@@ -76,7 +76,6 @@ function convertToWikitext() {
             if (rowCounter > 10) continue;
             WIKI = WIKI + `|-\n`;
             for (let e in row) {
-                if (e == 0) console.log(e, row)
                 if (e == 0) WIKI = WIKI + `| ${rowCounter}. || ${row[e]} `;
                 else WIKI = WIKI + `|| ${row[e]} `;
             }
@@ -182,7 +181,6 @@ function loadCategoryFromWiki(wikiContent) {
                 lineSplit = undefined;
                 multiLiner = true;
             }
-            if (line.substr(0,3) == "|| ") console.log(multiLiner, line, lineSplit, contentPush);
         }
         /*
         if (line.includes("http")) { // link
@@ -200,7 +198,6 @@ function loadCategoryFromWiki(wikiContent) {
 
             multiLiner = true;
             lineSplit = undefined;
-            if (line.substr(0, 3) == "|| ") console.log(multiLiner, lineSplit, contentPush);
         }
         */
         
@@ -210,7 +207,6 @@ function loadCategoryFromWiki(wikiContent) {
             else contentPush.push(lineSplit[1]);
 
             lineSplit = undefined;
-            if (line.substr(0, 3) == "|| ") console.log(multiLiner, lineSplit, contentPush);
         }
         
         if (line.includes("|-")) {
@@ -220,7 +216,6 @@ function loadCategoryFromWiki(wikiContent) {
                 contentPush = [];
                 multiLiner = false;
             }
-            if (line.substr(0, 3) == "|| ") console.log(multiLiner, lineSplit, contentPush);
         }
     }
 
@@ -453,7 +448,6 @@ function addTableRow() {
     input = input.split(",");
     if (input.length + 1 != saveData.catConfig[saveData.selected].header.split("!!").length) return false;
 
-    console.log(input)
     saveData.records[saveData.selected].push(input);
     sortTable();
     renderEverything();
@@ -502,7 +496,6 @@ function sortTable(tableID = saveData.selected, sortByID = "auto") {
 
     for (let j = 0; j < pairs.length - 1; j++) {
         for (let i = j + 1; i < pairs.length; i++) {
-            console.log(pairs[j][1] > pairs[i][1], pairs[j][1], pairs[i][1]);
             if (ascending == true ? pairs[i][1] < pairs[j][1] : pairs[j][1] < pairs[i][1]) {
                 // swap
                 if (ascending == true) {
