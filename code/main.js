@@ -33,6 +33,7 @@ function generateID() {
 }
 
 function convertToWikitext() {
+    // CRAZY TODO PLAN?: generalize this (and other way around) into the wikitext-html converter, to have wikitext-js converts
     let WIKI = ``;
     let table;
     let tconfig;
@@ -51,13 +52,15 @@ function convertToWikitext() {
         WIKI = WIKI + `{| class='article-table'\n`;
 
         // table content 
-        if (tconfig.header.substr(0, 2) == "! ") WIKI = WIKI + `${tconfig.header}\n|-\n`;
+        if (tconfig.header.substr(0, 2) == "! ") WIKI = WIKI + `${tconfig.header}\n`;
         else WIKI = WIKI + `! ${tconfig.header}\n`;
 
         rowCounter = 1;
         for (let row of table) {
+            if (rowCounter > 10) continue;
             WIKI = WIKI + `|-\n`;
             for (let e in row) {
+                if (e == 0) console.log(e, row)
                 if (e == 0) WIKI = WIKI + `| ${rowCounter}. || ${row[e]} `;
                 else WIKI = WIKI + `|| ${row[e]} `;
             }
@@ -199,6 +202,10 @@ function loadCategoryFromWiki(wikiContent) {
         }
     }
 
+    if (multiLiner && contentPush.length > 0) {
+        content.push(contentPush);
+    }
+
     return content;
 };
 
@@ -206,7 +213,7 @@ function loadCategoriesFromWiki(categoriesContent) {
     // takes the raw wiki data, and loads the records with their people
     // as well as the header (player name, level, etc.)
 
-    // separates categories by headers
+    // separates categories by == categories ==
     categoriesContent = categoriesContent.split("\n=");
     let categoryName;
     let ID;
@@ -226,6 +233,7 @@ function loadCategoriesFromWiki(categoriesContent) {
             if (saveData.catConfig[ID] == undefined) saveData.catConfig[ID] = {};
             saveData.catConfig[ID].name = categoryName;
 
+            // headers
             for (let cc of cat.split("\n")) {
                 if (cc.includes("!!")) {
                     if (cc.includes("lace")) saveData.catConfig[ID].header = cc;
@@ -241,10 +249,19 @@ function createTable(name, content) {
     let counter = 1;
     let table = "{|\n" + saveData.catConfig[name].header;
 
+    let sorter = saveData.catConfig[name].sorter;
+    let trimmedHeaders = saveData.catConfig[name].header.split("!!");
+    for (let h in trimmedHeaders) {
+        trimmedHeaders[h] = trimmedHeaders[h].trim().toLowerCase();
+    }
+
     let cclass = "";
     let cclick = "";
 
-    for (let c of content){
+    let prevValue = "";
+    let prevCount = -1;
+
+    for (let c of content) {
         // filter/highlight color (class) change
         if (config.editorMode && editor.row == counter) cclass = "class='editing' ";
         else if (ui.tableSearch.value != "" && c.toString().toLowerCase().includes(ui.tableSearch.value.toLowerCase())) cclass = "class='golden' ";
@@ -254,16 +271,30 @@ function createTable(name, content) {
         // clickable in editor mode
         if (config.editorMode) cclick = "onclick='clickRow(" + counter + ")' ";
 
+        // ties
+        if (sorter != undefined && prevValue == c[trimmedHeaders.indexOf(sorter) - 1]) {
+            if (prevCount == -1) prevCount = counter - 1;
+        }
+        else {
+            prevCount = -1;
+            prevValue = "";
+        }
+
         // add content
-        table = table + "\n|-\n| " + cclass + cclick + counter + ".";
+        table = table + "\n|-\n| " + cclass + cclick
+            + (prevCount != -1 ? ("=" + prevCount) : counter) + ".";
         for (let cc of c) {
             table = table + "||" + cc;
         }
+
+        prevValue = c[trimmedHeaders.indexOf(sorter) - 1]; // also for ties
 
         // used for 1./2./3. and top 10 limiter
         counter++;
         if (ui.top10.checked == true && counter > 10) break;
     }
+    table = table + "\n|}";
+
     return formatTableFromHTML(tableFromWiki(table),
     { tableClass: "tableClass", headerClass: "headerClass", rowClass: "rowClass" });
 }
@@ -451,26 +482,27 @@ function sortTable(tableID = saveData.selected, sortByID = "auto") {
     if (ascending == "true") ascending = true;
     if (saveData.settings.upsideDown == true) ascending = !ascending;
 
-    for (let j = 0; j < pairs.length; j++) {
-        for (let i = 0; i < pairs.length -1; i++) {
-            if (ascending == true ? pairs[j][1] < pairs[i][1] : pairs[j][1] > pairs[i][1]) {
+    for (let j = 0; j < pairs.length - 1; j++) {
+        for (let i = j + 1; i < pairs.length; i++) {
+            console.log(pairs[j][1] > pairs[i][1], pairs[j][1], pairs[i][1]);
+            if (ascending == true ? pairs[i][1] < pairs[j][1] : pairs[j][1] < pairs[i][1]) {
                 // swap
                 if (ascending == true) {
-                    let temp = [pairs[i][0], pairs[i][1]];
-                    pairs[i] = [pairs[j][0], pairs[j][1]];
-                    pairs[j] = temp;
-                }
-                else {
                     let temp = [pairs[j][0], pairs[j][1]];
                     pairs[j] = [pairs[i][0], pairs[i][1]];
                     pairs[i] = temp;
+                }
+                else {
+                    // descending (default)
+                    let temp = [pairs[i][0], pairs[i][1]];
+                    pairs[i] = [pairs[j][0], pairs[j][1]];
+                    pairs[j] = temp;
                 }
             }
         }
     }
 
-    // gen new Table
-    // descending, high to low
+    // generate new Table from the swapped pairs
     for (let n in oldTable) {
         newTable.push(oldTable[pairs[n][0]]);
     }
