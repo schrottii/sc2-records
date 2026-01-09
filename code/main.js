@@ -14,7 +14,9 @@ var ui = {
     tableSearch: document.getElementById("tableSearch"),
     categoriesSearch: document.getElementById("categoriesSearch"),
     top10: document.getElementById("top10"),
+
     editorOnlySettings: document.getElementById("editorOnlySettings"),
+    toggleUpsideDown: document.getElementById("toggleUpsideDown"),
 };
 
 var editor = {
@@ -116,6 +118,10 @@ function sortableValue(v) {
 
     // return other
     return parseInt(v);
+}
+
+function toggleUpsideDown() {
+    saveData.settings.upsideDown = ui.toggleUpsideDown.value == "on" ? true : false;
 }
 
 ////////////////////////////////////////////////
@@ -443,6 +449,7 @@ function sortTable(tableID = saveData.selected, sortByID = "auto") {
     let ascending = saveData.catConfig[saveData.selected].ascending;
     if (ascending == undefined) ascending = false;
     if (ascending == "true") ascending = true;
+    if (saveData.settings.upsideDown == true) ascending = !ascending;
 
     for (let j = 0; j < pairs.length; j++) {
         for (let i = 0; i < pairs.length -1; i++) {

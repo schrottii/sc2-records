@@ -21,7 +21,10 @@ function newSaveData() {
         catConfig: {
 
         },
-        selected: ""
+        selected: "",
+        settings: {
+            
+        }
     };
     loadCategoriesFromWiki(exampleData);
 }
