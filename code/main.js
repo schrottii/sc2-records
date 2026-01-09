@@ -10,6 +10,7 @@ var ui = {
     editorAreaRow: document.getElementById("editorAreaRow"),
     tabTitle: document.getElementById("tabTitle"),
     tabTitle2: document.getElementById("tabTitle2"),
+    tabTitle3: document.getElementById("tabTitle3"),
 
     tableSearch: document.getElementById("tableSearch"),
     categoriesSearch: document.getElementById("categoriesSearch"),
@@ -23,6 +24,10 @@ var editor = {
     row: -1,
     category: ""
 }
+
+var catConfigs = [
+    "name", "header", "sorter", "ascending", "preText", "tree"
+];
 
 ////////////////////////////////////////////////
 // core functions
@@ -38,6 +43,10 @@ function convertToWikitext() {
     let table;
     let tconfig;
     let rowCounter;
+    let treeDepth;
+
+    let curTree = undefined;
+    let prevTree = [];
 
     for (let tID of Object.keys(saveData.records)) {
         table = saveData.records[tID];
@@ -47,7 +56,14 @@ function convertToWikitext() {
         //console.log(tconfig);
 
         // header and pretext
-        WIKI = WIKI + `==== ${tconfig.name} ====\n`;
+        curTree = tconfig.tree != undefined ? tconfig.tree.split(".") : [];
+        treeDepth = curTree.length;
+        if (treeDepth > 0 && prevTree[0] != curTree[0]) WIKI = WIKI + `== ${curTree[0]} ==\n`;
+        if (treeDepth > 1 && prevTree[1] != curTree[1]) WIKI = WIKI + `=== ${curTree[1]} ===\n`;
+        if (treeDepth > 2 && prevTree[2] != curTree[2]) WIKI = WIKI + `==== ${curTree[2]} ====\n`;
+        prevTree = curTree;
+
+        WIKI = WIKI + `==${"=".repeat(treeDepth)} ${tconfig.name} ==${"=".repeat(treeDepth)}\n`;
         if (tconfig.preText) WIKI = WIKI + tconfig.preText + `\n`;
         WIKI = WIKI + `{| class='article-table'\n`;
 
@@ -151,7 +167,6 @@ function loadCategoryFromWiki(wikiContent) {
             if (lineSplit[0].trim().substr(-1) == "."
                 && !lineSplit[0].includes("http")) lineSplit.shift(); // remove 1., 2., 3. (place)
 
-
             for (let e in lineSplit) {
                 lineSplit[e] = lineSplit[e].trim();
                 if (lineSplit[e].includes("{{exp")) lineSplit[e] = lineSplit[e].split("{{exp|")[1].split("|")[0];
@@ -167,11 +182,14 @@ function loadCategoryFromWiki(wikiContent) {
                 lineSplit = undefined;
                 multiLiner = true;
             }
+            if (line.substr(0,3) == "|| ") console.log(multiLiner, line, lineSplit, contentPush);
         }
+        /*
         if (line.includes("http")) { // link
             if (lineSplit != undefined) {
                 // add non-link content
                 if (contentPush.length == 0) contentPush.push(...lineSplit);
+                lineSplit = undefined;
             }
 
             // combine existing links and latest link
@@ -182,7 +200,9 @@ function loadCategoryFromWiki(wikiContent) {
 
             multiLiner = true;
             lineSplit = undefined;
+            if (line.substr(0, 3) == "|| ") console.log(multiLiner, lineSplit, contentPush);
         }
+        */
         
         if (lineSplit != undefined) {
             if (!multiLiner) content.push(lineSplit);
@@ -190,6 +210,7 @@ function loadCategoryFromWiki(wikiContent) {
             else contentPush.push(lineSplit[1]);
 
             lineSplit = undefined;
+            if (line.substr(0, 3) == "|| ") console.log(multiLiner, lineSplit, contentPush);
         }
         
         if (line.includes("|-")) {
@@ -199,6 +220,7 @@ function loadCategoryFromWiki(wikiContent) {
                 contentPush = [];
                 multiLiner = false;
             }
+            if (line.substr(0, 3) == "|| ") console.log(multiLiner, lineSplit, contentPush);
         }
     }
 
@@ -390,10 +412,6 @@ function editCategory(category = saveData.selected) {
     let render = "<h4>Edit category:</h4>";
 
     // render editable config for the category
-    let catConfigs = [
-        "name", "header", "sorter", "ascending", "preText"
-    ];
-
     for (let cfg of catConfigs) {
         render = render + cfg + ": "
         + "<input id='cfg-" + cfg
@@ -556,6 +574,7 @@ function renderRightSide() {
 function renderEverything() {
     ui.tabTitle.innerHTML = config.managerTitle;
     ui.tabTitle2.innerHTML = config.managerTitle;
+    ui.tabTitle3.innerHTML = config.managerTitle;
 
     renderCategoriesList();
     renderRightSide();

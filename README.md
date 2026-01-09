@@ -27,9 +27,6 @@ Config content:
 - Data from wikidata.js is loaded automatically on boot, can be used to show it to public
 
 ## To do
-- Export to wiki format: posupgs-esque format
-- category trees
 - Score counter for players (simple and points)
 - Own records, saved locally
 - alarm if a player gets added a second time to table (catconfig for that?)
-- Removing scrap references (used for indev), creating fork for that, release everything
