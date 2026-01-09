@@ -13,7 +13,7 @@
     <div style="background-color: rgb(20, 20, 20, 0.5);">
         <h3 id="sectionTitle">---</h3>
         <div style="float: left; width: 29%; overflow-y: scroll; max-height: 400px;">
-            search: <input id="categoriesSearch" type="search" onkeyup="renderCategoriesList();"> </input>
+            search: <input id="categoriesSearch" type="search" onkeyup="renderCategoriesList();">
             <span id="leftSide"></span>
         </div>
         <div style="float: left; width: 1%; background-color: rgb(31, 31, 31); color: rgb(31, 31, 31); min-height: 67vh;">I</div>
@@ -27,8 +27,8 @@
     </div>
 
     <h3>Tools</h3>
-    highlight row: <input id="tableSearch" type="search" onblur="renderRightSide();"> </input>
-    <br /> <input id="top10" type="checkbox" onchange="renderRightSide();">Only show top 10?</input>
+    highlight row: <input id="tableSearch" type="search" onblur="renderRightSide();">
+    <br /> <input id="top10" type="checkbox" onchange="renderRightSide();">Only show top 10?
 
     <br />
     <h3>Settings</h3>
@@ -36,7 +36,7 @@
         <button onclick="exportSaveData()">Export data</button> <br />
         <button onclick="importSaveData()">Import data</button> <br />
     </div>
-    <input id="toggleUpsideDown" type="checkbox" onchange="toggleUpsideDown();">Upside Down?</input>
+    <input id="toggleUpsideDown" type="checkbox" onchange="toggleUpsideDown();">Upside Down?
 
     <br /> <br />
     <div style="float: right; text-align: right;">
