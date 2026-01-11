@@ -6,5 +6,7 @@ var config = {
     // header at top of page and the tab and bottom
     managerTitle: "Records Manager",
     // force data wipe every reload, useful for testing, but beware
-    forceDataReset: true
+    forceDataReset: true,
+    // max. rows that are exported to wiki format (0 = all)
+    wikiExportRows: 0
 }
