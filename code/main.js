@@ -26,7 +26,7 @@ var editor = {
 }
 
 var catConfigs = [
-    "name", "header", "sorter", "ascending", "preText", "tree"
+    "name", "header", "sorter", "ascending", "preText", "tree", "exportRowsLimit"
 ];
 
 ////////////////////////////////////////////////
@@ -52,6 +52,9 @@ function convertToWikitext() {
         table = saveData.records[tID];
         tconfig = saveData.catConfig[tID];
 
+        let rowsToExport = config.wikiExportRows == 0 ? Infinity : config.wikiExportRows;
+        if (tconfig.exportRowsLimit != undefined && tconfig.exportRowsLimit != "" && tconfig.exportRowsLimit != 0) rowsToExport = tconfig.exportRowsLimit;
+
         //console.log(table);
         //console.log(tconfig);
 
@@ -73,7 +76,7 @@ function convertToWikitext() {
 
         rowCounter = 1;
         for (let row of table) {
-            if (rowCounter > 10) continue;
+            if (rowCounter > rowsToExport) break;
             WIKI = WIKI + `|-\n`;
             for (let e in row) {
                 if (e == 0) WIKI = WIKI + `| ${rowCounter}. || ${row[e]} `;
@@ -146,7 +149,8 @@ function sortableValue(v) {
 }
 
 function toggleUpsideDown() {
-    saveData.settings.upsideDown = ui.toggleUpsideDown.value == "on" ? true : false;
+    saveData.settings.upsideDown = ui.toggleUpsideDown.checked;
+    sortTable();
 }
 
 ////////////////////////////////////////////////
@@ -185,7 +189,6 @@ function loadCategoryFromWiki(wikiContent) {
             //if (lineSplit.length > 0 && lineSplit[lineSplit.length - 1].trim() == "") lineSplit.pop();
             if (line.substr(0, 2) == "||" && lineSplit[0].trim() == "") lineSplit.shift();
 
-            if (wikiLines[0].includes("Positi")) console.log(lineSplit)
             if (lineSplit[0].trim() != "") {
                 contentPush.push(...lineSplit);
                 lineSplit = undefined;
@@ -316,10 +319,12 @@ function showCategory(name) {
     // triggered when left side button clicked
     // changes right side to selected record category
     saveData.selected = name;
-    editor.row = -1;
 
+    editor.row = -1;
     ui.editorAreaRow.innerHTML = "";
     editCategory();
+
+    sortTable();
     renderRightSide();
     renderCategoriesList();
     saveSaveData();
@@ -492,7 +497,7 @@ function sortTable(tableID = saveData.selected, sortByID = "auto") {
 
     // sort
     let ascending = saveData.catConfig[saveData.selected].ascending;
-    if (ascending == undefined) ascending = false;
+    if (ascending == undefined || ascending == "undefined" || ascending == "false") ascending = false;
     if (ascending == "true") ascending = true;
     if (saveData.settings.upsideDown == true) ascending = !ascending;
 
@@ -501,12 +506,14 @@ function sortTable(tableID = saveData.selected, sortByID = "auto") {
             if (ascending == true ? pairs[i][1] < pairs[j][1] : pairs[j][1] < pairs[i][1]) {
                 // swap
                 if (ascending == true) {
+                    // turn j to i, then i to j
                     let temp = [pairs[j][0], pairs[j][1]];
                     pairs[j] = [pairs[i][0], pairs[i][1]];
                     pairs[i] = temp;
                 }
                 else {
                     // descending (default)
+                    // turn i to j, then j to i
                     let temp = [pairs[i][0], pairs[i][1]];
                     pairs[i] = [pairs[j][0], pairs[j][1]];
                     pairs[j] = temp;
