@@ -538,6 +538,7 @@ function sortTable(tableID = saveData.selected, sortByID = "auto") {
 function renderCategoriesList() {
     // renders the left side
     let render = "";
+    let treeName = "";
 
     // ft. search, to either search for the name, or its contents (needs to be fully spelled then)
     let filter = ui.categoriesSearch.value.toLowerCase().trim();
@@ -557,7 +558,8 @@ function renderCategoriesList() {
             || saveData.catConfig[ID].name.toLowerCase().includes(filter)
             || nameFilters.includes(filter)
         ) {
-            render = render + "<button class='listButton' onclick='showCategory(`" + ID + "`)' style='" + (saveData.selected == ID ? "background-color: rgb(255, 255, 180);" : "") + "'>" + saveData.catConfig[ID].name + "</button><br />";
+            treeName = saveData.catConfig[ID].tree ? ("<small>" + saveData.catConfig[ID].tree.split(".")[0] + "</small> > ") : "";
+            render = render + "<button class='listButton' onclick='showCategory(`" + ID + "`)' style='" + (saveData.selected == ID ? "background-color: rgb(255, 255, 180);" : "") + "'>" + treeName + saveData.catConfig[ID].name + "</button><br />";
         }
     }
 
