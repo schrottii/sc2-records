@@ -558,8 +558,8 @@ function renderCategoriesList() {
             || saveData.catConfig[ID].name.toLowerCase().includes(filter)
             || nameFilters.includes(filter)
         ) {
-            treeName = saveData.catConfig[ID].tree ? ("<small>" + saveData.catConfig[ID].tree.split(".")[0] + "</small> > ") : "";
-            render = render + "<button class='listButton' onclick='showCategory(`" + ID + "`)' style='" + (saveData.selected == ID ? "background-color: rgb(255, 255, 180);" : "") + "'>" + treeName + saveData.catConfig[ID].name + "</button><br />";
+            treeName = saveData.catConfig[ID].tree ? ("<small style='font-size: 12px; position: absolute; left: 10px; text-align: left;'>" + saveData.catConfig[ID].tree.split(".")[0] + "> </small>") : "";
+            render = render + "<button class='listButton' onclick='showCategory(`" + ID + "`)' style='position: relative; " + (saveData.selected == ID ? "background-color: rgb(255, 255, 180);" : "") + "'>" + treeName + saveData.catConfig[ID].name + "</button><br />";
         }
     }
 
