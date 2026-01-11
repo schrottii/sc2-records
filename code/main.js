@@ -79,7 +79,7 @@ function convertToWikitext() {
                 if (e == 0) WIKI = WIKI + `| ${rowCounter}. || ${row[e]} `;
                 else WIKI = WIKI + `|| ${row[e]} `;
             }
-            
+
             WIKI = WIKI + `\n`;
             rowCounter++;
         }
@@ -102,24 +102,30 @@ function sortableValue(v) {
     if (v.includes("http")) {
         v = v.trim();
         v = v.substr(v.indexOf(" ")).trim();
-        if (v.substr(-1) == "]") v = v.substr(0, v.length - 1);
+        if (v.includes("]")) v = v.substr(0, v.indexOf("]"));
     }
 
     // time
-    if (v.includes("min") || v.includes("hour")) {
-        if (v.split(" ").length > 3) {
-            v = v.split(" "); // 69 hours 30 mins -> 60,hours,30,mins
-            let h = v[0] * 60;
-            v = h + v[2];
+    if (v.toLowerCase().includes("hour")) {
+        if (v.toLowerCase().includes("min")) {
+            if (v.split(" ").length > 3) {
+                v = v.split(" "); // 69 hours 30 mins -> 60,hours,30,mins
+                let h = parseInt(v[0]) * 60;
+                v = h + parseInt(v[2]);
+            }
+            else {
+                v = v.split("h"); // still catches the hour
+                let h = parseInt(v[0]) * 60;
+                v = h + parseInt(v[1]);
+            }
         }
         else {
-            v = v.split("h"); // still catches the hour
-            let h = parseInt(v[0]) * 60;
-            v = h + v[1];
+            return parseInt(v) * 60;
         }
 
         return parseInt(v);
     }
+    else if (v.toLowerCase().includes("min")) return parseInt(v);
 
     // normal notation numbers
     let normalNotation = "kMBTQqSsOND".split("");
@@ -135,6 +141,7 @@ function sortableValue(v) {
     }
 
     // return other
+    if (v.substr(0, 1) == "e") v = v.substr(1);
     return parseInt(v);
 }
 
@@ -197,7 +204,7 @@ function loadCategoryFromWiki(wikiContent) {
             multiLiner = true;
             lineSplit = undefined;
         }
-        
+
         if (line.includes("|-")) {
             if (multiLiner) {
                 // pushes multi line content when next line begins for sure
@@ -271,7 +278,7 @@ function createTable(name, content) {
         // filter/highlight color (class) change
         if (config.editorMode && editor.row == counter) cclass = "class='editing' ";
         else if (ui.tableSearch.value != "" && c.toString().toLowerCase().includes(ui.tableSearch.value.toLowerCase())) cclass = "class='golden' ";
-        else if (ui.categoriesSearch.value != "" && c.toString().toLowerCase().includes(ui.categoriesSearch.value.toLowerCase().trim())) cclass ="class='highlighted' ";
+        else if (ui.categoriesSearch.value != "" && c.toString().toLowerCase().includes(ui.categoriesSearch.value.toLowerCase().trim())) cclass = "class='highlighted' ";
         else cclass = "";
 
         // clickable in editor mode
@@ -302,14 +309,16 @@ function createTable(name, content) {
     table = table + "\n|}";
 
     return formatTableFromHTML(tableFromWiki(table),
-    { tableClass: "tableClass", headerClass: "headerClass", rowClass: "rowClass" });
+        { tableClass: "tableClass", headerClass: "headerClass", rowClass: "rowClass" });
 }
 
 function showCategory(name) {
     // triggered when left side button clicked
     // changes right side to selected record category
     saveData.selected = name;
+    editor.row = -1;
 
+    ui.editorAreaRow.innerHTML = "";
     editCategory();
     renderRightSide();
     renderCategoriesList();
@@ -330,8 +339,8 @@ function clickRow(row) {
 
     for (let c in saveData.records[saveData.selected][row - 1]) {
         render = render + saveData.catConfig[saveData.selected].header.split("!!")[parseInt(c) + 1] // +1 to ignore place
-        + "<input id='cell-" + c + "' onblur='editCell(" + c + ")' type='text' style='width: 75%; text-align: left;' value='"
-        + saveData.records[saveData.selected][row - 1][c] + "'></input><br />";
+            + "<input id='cell-" + c + "' onblur='editCell(" + c + ")' type='text' style='width: 75%; text-align: left;' value='"
+            + saveData.records[saveData.selected][row - 1][c] + "'></input><br />";
     }
 
     render = render + "<button onclick='deleteRow()'>Delete row</button>";
@@ -365,14 +374,14 @@ function editCell(nr) {
     if (!config.editorMode) return false;
 
     saveData.records[saveData.selected][editor.row - 1][nr] = document.getElementById("cell-" + nr).value;
-    
+
     sortTable();
     renderRightSide();
 }
 
 function deletePlayer(player) {
     if (!config.editorMode) return false;
-    
+
     let table;
     for (let t in saveData.records) {
         table = saveData.records[t];
@@ -382,6 +391,7 @@ function deletePlayer(player) {
     }
 
     // render list, right side is done by deleteRow
+    editor.row = -1;
     renderCategoriesList();
 }
 
@@ -398,10 +408,10 @@ function editCategory(category = saveData.selected) {
     // render editable config for the category
     for (let cfg of catConfigs) {
         render = render + cfg + ": "
-        + "<input id='cfg-" + cfg
-        + "' style='width: 75%; text-align: left;'"
-        + "value='" + saveData.catConfig[category][cfg]
-        + "' onblur='editCategoryConfig(`" + cfg + "`)'></input><br />";
+            + "<input id='cfg-" + cfg
+            + "' style='width: 75%; text-align: left;'"
+            + "value='" + saveData.catConfig[category][cfg]
+            + "' onblur='editCategoryConfig(`" + cfg + "`)'></input><br />";
     }
 
     // buttons
@@ -424,7 +434,10 @@ function editCategoryConfig(cfg) {
 
 function addTableRow() {
     let headers = saveData.catConfig[saveData.selected].header;
-    let example = saveData.records[saveData.selected][0];
+    let example = [];
+    for (let e of saveData.records[saveData.selected][0]) {
+        example.push(e);
+    }
     if (example[example.length - 1].includes("[http")) {
         example[example.length - 1] = "images";
     }
@@ -432,9 +445,9 @@ function addTableRow() {
         headers = headers.split("lace")[1];
     }
 
-    let input = prompt("separated by ,\n" + headers + "\n" + example);
-    if (input == false || input == "" || input == undefined || !input.includes(",")) return false;
-    input = input.split(",");
+    let input = prompt("separated by ;\n" + headers + "\n" + example);
+    if (input == false || input == "" || input == undefined || !input.includes(";")) return false;
+    input = input.split(";");
     if (input.length + 1 != saveData.catConfig[saveData.selected].header.split("!!").length) return false;
 
     saveData.records[saveData.selected].push(input);
@@ -468,7 +481,7 @@ function sortTable(tableID = saveData.selected, sortByID = "auto") {
     }
     if (sortByID == undefined) {
         // usually the right one (0 = player, 1 = value)
-        sortByID = 1; 
+        sortByID = 1;
         saveData.catConfig[saveData.selected].sorter = 1;
     }
 
@@ -550,7 +563,7 @@ function renderRightSide() {
 
     ui.sectionTitle.innerHTML = saveData.catConfig[saveData.selected].name;
     ui.rightSide.innerHTML = (saveData.catConfig[saveData.selected].preText ? saveData.catConfig[saveData.selected].preText : "")
-    + createTable(saveData.selected, cat);
+        + createTable(saveData.selected, cat);
 }
 
 function renderEverything() {

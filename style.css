@@ -20,6 +20,10 @@ button {
     min-height: 40px;
 }
 
+input {
+    font-size: 18px;
+}
+
 /* left side css */
 .listButton {
     width: 100%;
