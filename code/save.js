@@ -2,9 +2,6 @@
 var saveData;
 
 function loadSaveData() {
-    saveData = JSON.parse(hostedData.substring(config.localStorageKey.length));
-    return true;
-
     if (localStorage.getItem(config.localStorageKey)) {
         saveData = JSON.parse(localStorage.getItem(config.localStorageKey).substring(config.localStorageKey.length));
         return true;
@@ -17,6 +14,9 @@ function saveSaveData() {
 }
 
 function newSaveData() {
+    saveData = JSON.parse(hostedData.substring(config.localStorageKey.length));
+    return true;
+
     saveData = {
         records: {
 

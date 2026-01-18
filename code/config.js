@@ -6,7 +6,7 @@ var config = {
     // header at top of page and the tab and bottom
     managerTitle: "Scrap 2 Records",
     // force data wipe every reload, useful for testing, but beware
-    forceDataReset: false,
+    forceDataReset: true,
     // max. rows that are exported to wiki format (0 = all)
     wikiExportRows: 10
 }
