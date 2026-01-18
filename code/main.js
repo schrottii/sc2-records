@@ -145,6 +145,7 @@ function sortableValue(v) {
 
     // return other
     if (v.substr(0, 1) == "e") v = v.substr(1);
+    if (v.substr(0, 1) == "x") v = v.substr(1); // EDITED
     return parseInt(v);
 }
 
