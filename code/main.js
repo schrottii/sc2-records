@@ -604,9 +604,10 @@ function renderCategoriesList() {
     for (let ID in saveData.records) {
         if (filter != "") {
             nameFilters = [];
-            for (n of saveData.records[ID]) {
-                for (nn of n) {
-                    nameFilters.push(nn.toLowerCase().trim());
+            for (let n of saveData.records[ID]) {
+                // EDITED
+                for (let nn of n) {
+                    if (nn != undefined && typeof(nn) == "string") nameFilters.push(nn.toLowerCase().trim());
                 }
             }
         }
