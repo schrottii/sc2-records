@@ -730,7 +730,7 @@ function renderRightSide() {
 function renderEverything() {
     ui.tabTitle.innerHTML = config.managerTitle;
     ui.tabTitle2.innerHTML = config.managerTitle;
-    ui.tabTitle3.innerHTML = config.managerTitle + " " + document.getElementById("topRow").offsetWidth;
+    ui.tabTitle3.innerHTML = config.managerTitle;
 
     renderCategoriesList();
     renderRightSide();
