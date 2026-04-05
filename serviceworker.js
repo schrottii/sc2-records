@@ -1,4 +1,4 @@
-const cacheName = "recmang";
+const cacheName = "sc2rec";
 
 self.addEventListener('install', (e) => {
     e.waitUntil(
