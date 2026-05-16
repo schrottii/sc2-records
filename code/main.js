@@ -411,7 +411,7 @@ function clickRow(row) {
     
     if (!config.editorMode) {
         // no edit mode... wanna see the player?
-        if (getSetting("showProfiles")) renderRightSideProfile(playerPos);
+        if (getSetting("showProfiles") && playerPos !== undefined) renderRightSideProfile(playerPos);
         return;
     }
 
