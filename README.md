@@ -11,3 +11,6 @@ Differences to the wiki for normal users/spectators:
 - Highlight contents
 - Show top 10 only, or all
 - Upside down
+- Gaps
+- Random category
+- Player profiles

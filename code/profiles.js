@@ -2,7 +2,7 @@ function renderRightSideProfile(player) {
     ui.sectionTitle.innerHTML = player;
     ui.editorAreaCategory.innerHTML = "";
 
-    ui.rightSide.innerHTML = "<button style='float: left;' onclick='renderRightSide();'>Back</button><br style='clear: both;' />"
+    ui.rightSide.innerHTML = "<button style='float: left;' onclick='renderRightSide();'>Back</button>" + (window.innerWidtha > 640 ? "<br style='clear: both;' />" : "")
         + renderPlayerBanStatus(player)
         + renderPlayerPoints(player);
 
