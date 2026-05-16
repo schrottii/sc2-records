@@ -1,6 +1,6 @@
 var config = {
     // allows editing the data/tables
-    editorMode: false,
+    editorMode: true,
     // how it's stored in localStorage
     localStorageKey: "SC2REC",
     // header at top of page and the tab and bottom
@@ -14,5 +14,7 @@ var config = {
     // have dark mode as default? options: light, dark, auto
     defaultTheme: "light",
     // does dark mode have its own background?
-    darkModeBG: true
+    darkModeBG: true,
+    // editing: warn if a player who is already in the table is getting added again
+    duplicatePlayerWarning: true
 }
