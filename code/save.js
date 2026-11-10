@@ -66,6 +66,7 @@ function newSaveData() {
         saveData.records = Object.assign(saveData.records, loadedSave.records);
         saveData.catConfig = Object.assign(saveData.catConfig, loadedSave.catConfig);
         saveData.banLists = Object.assign(saveData.banLists, loadedSave.banLists);
+        saveData.news = Object.assign([], loadedSave.news);
 
         //console.log(saveData);
         return true;

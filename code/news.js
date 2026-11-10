@@ -166,7 +166,7 @@ function showNews() {
                 categoryTypeCounter++;
 
                 // add the entry 
-                render += "<li>" + "<button onclick='deleteNews(`" + JSON.stringify(neu) + "`)'><big>X</big></button>"
+                render += "<li>" + (config.editorMode ? "<button onclick='deleteNews(`" + JSON.stringify(neu) + "`)'><big>X</big></button>" : "")
                     + getNews(neu.type, neu.data) + "</li>";
 
                 // then yeetus deletus (to save processing speed on future categories)
@@ -183,7 +183,7 @@ function showNews() {
         neu = renderNews[n];
 
         if (ShowNews_General.includes(neu.type)) {
-            render += "<li>" + "<button onclick='deleteNews(`" + JSON.stringify(neu) + "`)'><big>X</big></button>"
+            render += "<li>" + (config.editorMode ? "<button onclick='deleteNews(`" + JSON.stringify(neu) + "`)'><big>X</big></button>" : "")
                 + getNews(neu.type, neu.data) + "</li>";
 
             renderNews.splice(n, 1);
